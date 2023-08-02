@@ -15,3 +15,7 @@ pip install bitsandbytes accelerate
 pip install scipy
 pip install flask
 ```
+# 動かす
+```bash
+python chatbot_server.py
+```
