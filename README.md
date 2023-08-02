@@ -4,6 +4,9 @@
 # installation
 ```
 conda create -n hf python=3.10
+conda activate hf
+```
+```
 pip3 install torch torchvision torchaudio 
 pip install transformers[sentencepiece]
 pip install bitsandbytes accelerate
