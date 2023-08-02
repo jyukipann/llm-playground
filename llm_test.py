@@ -1,5 +1,5 @@
 import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 
 prompt = [
     {
@@ -27,6 +27,9 @@ prompt = [
     f"{uttr['speaker']}: {uttr['text']}"
     for uttr in prompt
 ]
+
+print('\n'.join(prompt))
+
 prompt = "<NL>".join(prompt)
 prompt = (
     prompt
@@ -34,13 +37,31 @@ prompt = (
     + "システム: "
 )
 
-tokenizer = AutoTokenizer.from_pretrained("rinna/japanese-gpt-neox-3.6b-instruction-ppo", use_fast=False)
-model = AutoModelForCausalLM.from_pretrained("rinna/japanese-gpt-neox-3.6b-instruction-ppo")
 
-if torch.cuda.is_available():
-    model = model.to("cuda")
 
-token_ids = tokenizer.encode(prompt, add_special_tokens=False, return_tensors="pt")
+
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_use_double_quant=True,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_compute_dtype=torch.bfloat16
+)
+
+tokenizer = AutoTokenizer.from_pretrained(
+    "rinna/japanese-gpt-neox-3.6b-instruction-ppo", use_fast=False, legacy=False)
+model = AutoModelForCausalLM.from_pretrained(
+    "rinna/japanese-gpt-neox-3.6b-instruction-ppo",
+    load_in_4bit=True,
+    device_map="auto",
+    torch_dtype=torch.bfloat16,
+    quantization_config=bnb_config
+)
+
+# if torch.cuda.is_available():
+#     model = model.to("cuda")
+
+token_ids = tokenizer.encode(
+    prompt, add_special_tokens=False, return_tensors="pt")
 
 with torch.no_grad():
     output_ids = model.generate(
@@ -54,7 +75,12 @@ with torch.no_grad():
         eos_token_id=tokenizer.eos_token_id
     )
 
-output = tokenizer.decode(output_ids.tolist()[0][token_ids.size(1):])
+output_ids = output_ids[output_ids != tokenizer.pad_token_id]
+output_ids = output_ids[output_ids != tokenizer.bos_token_id]
+output_ids = output_ids[output_ids != tokenizer.eos_token_id]
+# print(output_ids)
+# print(output_ids.tolist())
+output = tokenizer.decode(output_ids.tolist()[token_ids.size(1):])
 output = output.replace("<NL>", "\n")
-print(output)
+print('システム:', output)
 """それは、コンタクトレンズが目に合わないために起こることがあります。レンズが目の表面に長時間触れ続けることが原因となることがあります。また、コンタクトレンズが汚れている可能性もあります。コンタクトレンズケースを定期的に洗浄したり、コンタクトレンズを正しくフィットさせるようにしたりすることが役立ちます。</s>"""
