@@ -2,6 +2,8 @@
  llm playground
 
 # installation
+wslもしくはLinuxを想定。
+
 仮想環境
 ```
 conda create -n hf python=3.10
