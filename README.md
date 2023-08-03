@@ -2,7 +2,7 @@
  llm playground
 
 # installation
-wslもしくはLinuxを想定。
+wslもしくはLinuxを想定。bitsandbytesがwindowsだと障壁になるので、解消できれば問題なく動作する。
 
 仮想環境
 ```
